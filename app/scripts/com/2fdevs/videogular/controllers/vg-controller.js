@@ -73,6 +73,7 @@ angular.module("com.2fdevs.videogular")
         var currentTheme = null;
         var isFullScreenPressed = false;
         var isMetaDataLoaded = false;
+        var stopRequested = false;
 
         // PUBLIC $API
         this.videogularElement = null;
@@ -227,18 +228,15 @@ angular.module("com.2fdevs.videogular")
 
         this.onPlay = function () {
             this.setState(VG_STATES.PLAY);
-            $scope.$apply();
         };
 
         this.onPause = function () {
-            if (this.mediaElement[0].currentTime == 0) {
+            if (stopRequested) {
                 this.setState(VG_STATES.STOP);
             }
             else {
                 this.setState(VG_STATES.PAUSE);
             }
-
-            $scope.$apply();
         };
 
         this.onVolumeChange = function () {
@@ -288,29 +286,28 @@ angular.module("com.2fdevs.videogular")
 
                 this.currentState = newState;
             }
-
+			$scope.$apply();
             return this.currentState;
         };
 
         this.play = function () {
             this.mediaElement[0].play();
-            this.setState(VG_STATES.PLAY);
+            stopRequested = false;
         };
 
         this.pause = function () {
             this.mediaElement[0].pause();
-            this.setState(VG_STATES.PAUSE);
+            stopRequested = false;
         };
 
         this.stop = function () {
             try {
                 this.mediaElement[0].pause();
                 this.mediaElement[0].currentTime = 0;
-
                 this.currentTime = 0;
                 this.buffered = [];
                 this.bufferEnd = 0;
-                this.setState(VG_STATES.STOP);
+                stopRequested = true;
             }
             catch (e) {
                 return e;
@@ -438,10 +435,9 @@ angular.module("com.2fdevs.videogular")
 
         this.onComplete = function (event) {
             $scope.vgComplete();
-
-            this.setState(VG_STATES.STOP);
             this.isCompleted = true;
-            $scope.$apply();
+            stopRequested = false;
+            this.setState(VG_STATES.STOP);
         };
 
         this.onVideoError = function (event) {
